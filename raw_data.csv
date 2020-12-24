@@ -1,0 +1,2350 @@
+title,category,text
+NMAP in Android,/AndroJava/,"november 30, 2020
+
+				nmap in android			
+androjava
+
+
+ 
+
+
+ 
+
+
+
+in this post, i’m going to talk about my new library for using nmap in any android project. i’ve released the library in my github and bintray. using the library, you can use nmap on non rooted android device.
+
+alternatives
+it is similar to other projects available in google play such as network mapper. actually the binary library is based on the binary versions published by kost same author of network mapper.
+the binary files of nmap are available in kosts’s github repository.
+how to use
+there is three simple step for using the library in your project:
+add internet permission to the manifestadd nmapandroid dependency in your app level gradle file.write the simple code!
+here is the permission: 
+<uses-permission android:name=""android.permission.internet"" />
+here is the dependency:
+implementation 'ir.mstajbakhsh:nmap-android:1.0.0'
+here is the simple code:
+nmaputilities n = new nmaputilities(context);
+n.startinstallation();
+
+final stringbuilder line_buffer = new stringbuilder();
+outputstream ops = new outputstream() {
+	@override
+    public void write(int b) {
+    	if (b == '\n') {
+            system.out.println(line_buffer.tostring());
+            line_buffer.setlength(0);
+        } else {
+            line_buffer.append(character.tochars(b));
+        }
+    }
+};
+
+try {
+    n.execcommand(ops, ""-a"", ""192.168.1.0/24"", ""--system-dns"");
+} catch (exception e) {
+    e.printstacktrace();
+}
+here is the sample output of the project:
+nmap android sample output
+limitation
+due to the size limit, only two binary versions are included inside the library including: arm and x86. additionally, the flow chart of automatic installation of the library is depicted below:
+nmap android automatic installation process
+source code
+the source code is available in my personal repository in github. https://github.com/mirsamantajbakhsh/nmapandroid
+donation
+do not forget to buy me a cup of coffee. my bitcoin wallet address is:
+1f5uiemdcljx5kktwhe1wkc63fekjymmxs
+
+
+
+
+ android, library, nmap
+
+
+
+
+ 
+
+mir saman
+i'm currently an it phd. candidate at urmia university. i'm interested in social network analysis, big data mining, and nlp in my academical field as well as guitar, nature, and android!		
+			view all posts by mir saman		
+
+
+
+
+
+  previous post"
+TOR Android Library,/AndroJava/Anonymity Networks/,"november 22, 2020
+
+				tor android library			
+androjavaanonymity networks
+
+
+ 
+
+
+ 
+
+
+
+in previous post, i’ve talked about compiling tor from source in android and added some helper libraries for starting and configuring tor. in this post, i’ve created a library based on tor binary (version 0.4.4.0) and published in github, jfrog and jitpack.
+
+process
+whole process is simple. the following picture depicts it.
+tor android process
+importing the tor android into android studio
+there are 3 ways for importing the aar library to android studio.
+
+download the latest release from tor android github page.import from jcenter
+
+implementation 'ir.mstajbakhsh:tor-android:1.0.0'
+
+get from jitpack
+allprojects {
+    repositories {
+	maven { url 'https://jitpack.io' }
+    }
+}
+dependencies {
+implementation 'com.github.mirsamantajbakhsh:torandroid:1.0.0'
+}
+
+sample code
+here is a sample code for starting the tor android, an application with only one activity. the only needed permission is internet which should be added to the manifest.
+@override
+protected void oncreate(bundle savedinstancestate) {
+    super.oncreate(savedinstancestate);
+    setcontentview(r.layout.activity_main);
+
+    asynctask.execute(new runnable() {
+        @override
+        public void run() {
+
+            final torproxy tb = new torproxy.torbuilder(getapplicationcontext())
+                    .setsocksport(tor_transproxy_port_default) //9150 for example
+                    .setusebrideges(false)
+                    .setexternalhiddenserviceport(80)
+                    .setinternalhiddenserviceport(80)
+                    .setdebuggable(false)
+                    .build();
+            tb.init();
+
+            runonuithread(new runnable() {
+                @override
+                public void run() {
+                    toast.maketext(getapplicationcontext(), ""initialized"", toast.length_long).show();
+                }
+            });
+
+
+            try {
+                tb.start(new iconnectiondone() {
+                    @override
+                    public void onsuccess() {
+                        log.d(""torandroid"", ""tor started successfully."");
+                        runonuithread(new runnable() {
+                            @override
+                            public void run() {
+                                toast.maketext(getapplicationcontext(), ""tor is ok."", toast.length_long).show();
+                                toast.maketext(getapplicationcontext(), tb.getonionaddress(), toast.length_long).show();
+                            }
+                        });
+
+                    }
+
+                    @override
+                    public void onfailure(final exception ex) {
+                        log.e(""torandroid"", ""error in starting tor.\r\n"" + ex.getmessage());
+                        runonuithread(new runnable() {
+                            @override
+                            public void run() {
+                                toast.maketext(getapplicationcontext(), ""error\r\n"" + ex.getmessage(), toast.length_long).show();
+                            }
+                        });
+                    }
+                });
+            } catch (ioexception e) {
+                e.printstacktrace();
+            }
+        }
+    });
+
+}
+the result is ok. see it here:
+
+useful links
+https://github.com/mirsamantajbakhsh/torandroidhttps://bintray.com/mirsamantajbakhsh/android/torandroid
+
+
+
+
+ android, library, tor
+
+
+
+
+ 
+
+mir saman
+i'm currently an it phd. candidate at urmia university. i'm interested in social network analysis, big data mining, and nlp in my academical field as well as guitar, nature, and android!		
+			view all posts by mir saman		
+
+
+
+
+
+  previous post 
+
+next post"
+Compiling TOR in Android,/Anonymity Networks/,"september 24, 2020
+
+				compiling tor in android			
+anonymity networks
+
+
+ 
+
+
+ 
+
+
+
+in this post, i want to talk about compiling and using tor in your android projects. the main source relies in guardian repository. 
+
+getting tor binary
+as indicated in tor-android repository, by adding the maven url to the gradle config of your project, you are able to use tor’s latest build for android. however, i couldn’t add it through the link.
+tor android maven url
+this is what i get when i click on the link:
+error of maven urlkof tor android binary
+therefore i decided to download the complete source code and compile from scratch.
+getting tor
+the very easy method of getting the source code is:
+git clone https://github.com/guardianproject/tor-android.git
+but after getting the code, you need to download the submodules which are located in external subfolder.
+tor android’s submodules
+git submodule update --init
+# if there are nested submodules:
+git submodule update --init --recursive
+
+# from https://www.vogella.com/tutorials/gitsubmodules/article.html#:~:text=2.3.-,pulling%20with%20submodules,in%20the%20git%20pull%20command%20.
+so everything is ok. now you can use ./gradlew build  to build the source code. however, you should compile the binaries first. you can watch my youtube video about the details.
+my contribution
+i have added some code to make installing and starting tor easier. its functionality is similar to tor onion project.
+you can see my repository in the following link: https://github.com/mirsamantajbakhsh/tor-android/tree/hs_connect
+here is a screenshot of my commits in tor-android project in a branch named hs_connect.
+my contribution in tor-android for installing and starting tor in android
+the video
+the whole process is recorded and uploaded to my youtube channel. 
+
+join my channel to get all the videos!
+
+
+
+
+ android, compile, scratch, source code, tor
+
+
+
+
+ 
+
+mir saman
+i'm currently an it phd. candidate at urmia university. i'm interested in social network analysis, big data mining, and nlp in my academical field as well as guitar, nature, and android!		
+			view all posts by mir saman		
+
+
+
+
+
+  previous post 
+
+next post"
+Onion Balance v2: Beautiful Load Balancer in TOR,/Anonymity Networks/Cryptography/Tutorial/,"april 27, 2020
+
+				onion balance v2: beautiful load balancer in tor			
+anonymity networkscryptographytutorial
+
+
+ 
+
+
+ 
+
+
+
+in this post, i will talk a little about onionbalance, a load balancer in tor network. it enables adding multiple hidden services which can be accessed from one onion address.
+(the picture is from life hacker)
+
+a small description
+if you want to know more about tor network and hidden services, you can check my previous posts in anonimity category. 
+the idea of load balancing is about serving a service (such as web service) using multiple instances (web servers). load balancing helps users to wait less (for loading of a web page) and less traffic and load on the server.
+this is the general idea of a web load balancer:
+simple web server load balancer
+in normal load balancing schema, a dns server can resolve the same domain name to multiple ips using a load balancing algorithm (such as round robin), but in tor network, there is no dns server. the hidden services are served by hsd (hidden service directories). you can get more information from this link.
+final step in hidden service connection establishment
+therefore, bob (who owns a hidden service) register its introduction points in the hsd (or the db in picture). but bob runs a hidden service with one address. what is bob has more hidden services (same instance)?
+onion balance
+if bob can run multiple hidden services and ask hdss to change the introduction points of the multiple hidden services to only one introduction point, then the one address will be transferred to ip of the 1st hidden service or the 2nd or the 3rd, etc.
+this is how the onion balance (and similar tools) works.
+the idea ‌behind onion balance
+running onion balance
+i made a video tutorial about running onion balance. if you have any question, feel free to ask.
+
+
+onion balance video tutorial
+
+
+
+
+ anonymity, load balancer, onionbalance, tor
+
+
+
+
+ 
+
+mir saman
+i'm currently an it phd. candidate at urmia university. i'm interested in social network analysis, big data mining, and nlp in my academical field as well as guitar, nature, and android!		
+			view all posts by mir saman		
+
+
+
+
+
+  previous post 
+
+next post"
+Creating Hidden Mail Service,/Anonymity Networks/Tutorial/,"august 6, 2019
+
+				creating hidden mail service			
+anonymity networkstutorial
+
+
+ 
+
+
+ 
+
+
+
+previously, i’ve described how to run hidden mail service over tor and how to connect to it using thunderbird.
+in this post, i’ve create a video demo of what i’ve told in the posts.
+
+scenario of  creating hidden mail service 
+the scenario is made up of a mail server (hmailserver) which is located behind a tor hidden service and do not access to internet. by means of do not access to internet, i mean that hmailserver’s access to the internet is blocked by firewall which it cannot send emails to other servers. it is used to ensure local delivery of emails.
+additionally there are two users: alice and bob over the fake domain of hidden.one which communicate with each other over the hidden mail server. 
+video for creating hidden mail 
+you can find the video on my youtube channel. mr tajbakhsh youtube channel
+
+
+creating and configuring hidden mail service over tor
+
+
+
+
+
+ email server, hidden service, hmailserver, tor
+
+
+
+
+ 
+
+mir saman
+i'm currently an it phd. candidate at urmia university. i'm interested in social network analysis, big data mining, and nlp in my academical field as well as guitar, nature, and android!		
+			view all posts by mir saman		
+
+
+
+
+
+  previous post 
+
+next post"
+Broadcast Yourself Through Android,/AndroJava/Media/Tutorial/,"july 8, 2019
+
+				broadcast yourself through android			
+androjavamediatutorial
+
+
+ 
+
+
+ 
+
+
+
+i previously created a “hiddenlivecamera” library for android. in github, i’ve received an issue by  geminird  indicating that phone no responded. i described the reason and geminird asked for live audio stream.
+in another post, i’ve wrote about broadcasting media files (such as mp3) using mixxx and icecast. in this post, i’ve write about my library and how to use it in android projects in order to publish stream from android. the code of the library is grabbed from coolmic.
+
+the live audio android library
+i’ve created the library from coolmic code, which is listed as icecast client library. the code can be found in my github live audio repository. in addition i’ve published it as an aar library which can be included in your android applications. making life easier …
+using the library
+there is needed to configure stream server (here, icecast) and android client (using my liveaudio android library ). the library code is accessible from my github repository.
+icecast side
+after that, you should config your icecast (or any other audio stream server on your choice). using my post about broadcasting yourself, you can start configuration. but for this tutorial, i’ve used following stream source config in my icecast:
+<mount type=""normal"">
+    <mount-name>/harleyquinn</mount-name>
+    <username>joker</username>
+    <password>hackme</password>
+    <max-listeners>2</max-listeners>
+    <max-listener-duration>360000</max-listener-duration>
+    <dump-file>/tmp/harley.ogg</dump-file>
+    <charset>iso8859-1</charset>
+    <public>1</public>
+    <stream-name>harley quinn radio</stream-name>
+    <stream-description>listen to my live audio from gotham! with joker!</stream-description>
+    <genre>heavy</genre>
+    <bitrate>64</bitrate>
+    <type>application/ogg</type>
+    <subtype>vorbis</subtype>
+    <hidden>1</hidden>
+    <burst-size>65536</burst-size>
+    <mp3-metadata-interval>4096</mp3-metadata-interval>
+    <on-connect>/home/icecast/bin/source-start</on-connect>
+    <on-disconnect>/home/icecast/bin/source-end</on-disconnect>
+</mount>
+
+start your icecast using settings similar to above.
+android side
+the library is published in jcenter, so you can use it in your android project (i assume that you’re using gradle) like:
+ implementation 'ir.mstajbakhsh.android:liveaudio:1.0.0'
+after adding the library, one can set a config object for icecase configuration, like:
+config c = new config();
+c.host(""192.168.43.194"");
+c.port(8000);
+c.username(""joker"");
+c.password(""hackme"");
+c.mount(""/harleyquinn"");
+c.samplerate(16000);
+and then pass the config object to a liveaudio object:
+liveaudio l = new liveaudio(c);try {    l.start();} catch (exception e) {    e.printstacktrace();}
+everything is ok. start your application to broadcast yourself!
+video for broadcast yourself through android
+i’ve created a demo video for using of liveaudio:
+
+
+live audio library in action
+
+
+
+
+ android, broadcast, library, live
+
+
+
+
+ 
+
+mir saman
+i'm currently an it phd. candidate at urmia university. i'm interested in social network analysis, big data mining, and nlp in my academical field as well as guitar, nature, and android!		
+			view all posts by mir saman		
+
+
+
+
+
+  previous post 
+
+next post"
+Making Home More Smarter,/IoT/Personal/,"july 2, 2019
+
+				making home more smarter			
+iotpersonal
+
+
+ 
+
+
+ 
+
+
+
+i’ve previously installed a home assistant (ha) in my home and attached temperature and humidity sensor to it. i’ve tweeted about  home assistant times ago. now i had added it more features.
+
+customizing ui
+with the growth of sensors and smart elements at home, i’ve customized the ha interface and split the sensors in the following categories:
+weathercctvmedianews
+weather
+there are two weather sources in my current smart home. one source is from darksky sensor, the other is the old temperature and humidity sensor which shows the weather conditions inside home!
+home assistant – weather
+cctv
+i’ve added cctv cams and attached them to ha. finding the preview links was a bit annoying, but finally added.
+home assistant – cctv
+media
+these devices was in my previous configuration but a chrome cast and a samsung tv is added to this section.
+home assistant – media manager
+news
+i’ve used instructions for home assistant feed parser, but there was needed for some improvement (support for rtl languages or display improvements) which i had changed. the rss feed of news are added to the ha.
+home assistant – news feed
+what’s next for home assistant (ha) 
+currently i’m working on adding images to the rss feeds in my free time. i like to create a smart mirror and attach it to the ha and attach more sensors! let’s hope it all goes well!
+the demo of ha
+here i’ve uploaded a video captured from ha to youtube:
+
+
+
+
+
+
+
+ cctv, home assistant, media home, rss, sensor, smart home, weather
+
+
+
+
+ 
+
+mir saman
+i'm currently an it phd. candidate at urmia university. i'm interested in social network analysis, big data mining, and nlp in my academical field as well as guitar, nature, and android!		
+			view all posts by mir saman		
+
+
+
+
+
+  previous post 
+
+next post"
+Android Spy Camera,/AndroJava/Programming/RAT/,"june 3, 2019
+
+				android spy camera			
+androjavaprogrammingrat
+
+
+ 
+
+
+ 
+
+
+
+i was researching about android malware and their features, compare them. i’ve found that most of them (actually all) do not support live video stream from android camera, aka spy camera, and one that supports live camera, needs an activity. therefore, i’ve started a hidden spy camera project to live stream video from android camera to an rtmp server without activity, named live hidden camera.
+live hidden camera in action
+
+the idea of spy camera
+as i’ve told before, the main idea is from lack of live stream libraries. i wanted to know how the android camera works and how rats benefits the spy camera. i’ve searched and found a github repository, containing android rats. the only rat i’ve found with live stream ability was androrat which needs activity for video stream.
+androrat
+what i did
+i found open source libraries which is used for video streaming in android. they get picture from camera, audio from microphone, encode and sync them, and finally send them to a stream server. the list of opensource video streaming libraries are:
+ https://github.com/begeekmyfriend/yaseahttps://github.com/ant-media/livevideobroadcasterhttps://github.com/takusemba/rtmppublisherhttps://github.com/fyhertz/libstreaming 
+but all the libraries needs a surfaceview which is graphical element fr displaying camera preview to user. in android’s security mechanism, camera preview should be displayed to user for capturing from camera. therefore, i’ve searched for hiding camera preview and i’ve found  https://github.com/kevalpatel2106/android-hidden-camera which exactly do the same, overlays a dummy surfaceview with size of 1*1. but the library is used for taking pictures, not streaming.
+live hidden camera born
+the idea for hidden streaming is found based on android-hidden-camera and yasea. the main work was merging them, which was a bit annoying. but finally done.
+for the aim of streaming server, i’ve used ant media server which has a community edition and is free and opensource forked from red5. here is a manual for running the ant media server.
+ant media server
+the final stage was creating a library for others use. the library and the source code are available in my github repository.
+https://github.com/mirsamantajbakhsh/livehiddencamera/
+happy streaming!
+
+
+live hidden camera in action
+
+
+
+
+ android, camera, java, live, rat, rtmp, stream
+
+
+
+
+ 
+
+mir saman
+i'm currently an it phd. candidate at urmia university. i'm interested in social network analysis, big data mining, and nlp in my academical field as well as guitar, nature, and android!		
+			view all posts by mir saman		
+
+
+
+
+
+  previous post 
+
+next post"
+OnionFarm WriteUp,/Anonymity Networks/Cryptography/WriteUp/,"may 9, 2019
+
+				onionfarm writeup			
+anonymity networkscryptographywriteup
+
+
+ 
+
+
+ 
+
+
+
+onionfarm was one of the challenges in uutctf which was held in 25-28 april 2019 by urmia university of technology. the challenge has been solved by 4 teams. following, the challenge details and the write up is discussed.
+
+onionfarm
+the challenge said that the flag is inside the following link: http://uutctfysirwosxjx.onion/
+onionfarm challenge in uutctf2019
+the link is a hidden service and it starts with http. therefore, it should be opened by tor. using tor browser, the page is loaded.
+onionfarm hidden web service
+as it is shown in the above picture, there is a flag signed by a private key (in base64) and sha-1 hash of its public key is given.
+signed flag: y94qdvnr0koeu3j2cdqougyub+v1kzxmqiewnktf3g46teemkjc9mi4ox2wak/jnv433e9vwmaoxgc79hpz0wo6pfqurbtcoqyj3dczrkesgy0v4lcxke6r+nskzf0hxayvsmv6uixeqikoro+dwcwi2gvnvd4k+mw4vbhcxprs= 
+sha-1 of the public key: uutctfysirwosxjxadwzgzy34lrhjknq 
+but the sha-1 signature is not in familiar form. instead the first 16 chars of sha-1 hash is the same as the hidden web service name:  http://uutctfysirwosxjx.onion/ 
+the tor system
+in version 2 of the onion addresses in tor system, the onion link is 16 first chars of the public key of the hidden service, encoded in base32 address. therefore, the main task is getting the public key of this hidden service. tor itself gives a control port for controlling tor. stem is a python library for interacting with tor control port. following code from github link, can be used for getting the hidden service descriptors (information).
+import sys
+import argparse
+import stem
+from stem.control import controller
+def main():
+    parser = argparse.argumentparser(description=""%s fetches a tor hidden ""
+                                     ""service descriptor."" % sys.argv[0])
+    parser.add_argument(""-p"", ""--port"", type=int, default=9051,
+                        help=""tor controller port"")
+    parser.add_argument('onion_address', type=str, help='onion address')
+    args = parser.parse_args()
+    with controller.from_port(port=args.port) as controller:
+        controller.authenticate()
+        try:
+            hs_descriptor = controller.get_hidden_service_descriptor(args.onion_address)
+            print(hs_descriptor)
+        except stem.descriptorunavailable:
+            print(""descriptor not found, the hidden service may be offline."")
+            return 1
+if __name__ == '__main__':
+    sys.exit(main()) 
+using the above code, one can fetch the public key for the hidden service.
+hs descriptor for onionfarm
+rsa public key
+the flag
+we’ve found the public key, but the problem is that it is in rsa public key format. openssl accepts pem format which should be public key. therefor we need to convert the rsa public key in a readable format. first of all the base64 encoded text, is in asn.1 format. using tools such as asn1js, public key bytes and modulus can be gained. the online version of asn1js is available in jsfiddle website.
+asn.1 format
+now we have public key (138865786359602944891762156467560871881909108828375427630579384292773) and modulus (527482743). we need to form an pem file. with the public key and modulus bytes, we can form an xml format. in the following picture, i just show the modulus. the same procedure is done for public key.
+bytes to base64
+in final stage, we need a tool to convert xml format to pem. i’ve used superdry developer .
+final public key
+the final public key in pem format is: 
+—–begin public key—– miggma0gcsqgsib3dqebaquaa4goadcbigkbgqdfwf6gxxdrpmhai/3epaagty3h hkneorjt3oxu6qbbpdkjjmtlew504bsnkzcxgwog+477wglab4ktncupq65eawxm tjzwx99ongoq32cuuhyjl7lguqvfzf1uqqjizpftjouzaxoxq9h3qe2wi0xrvfph yiioat+jhhng2jkknwieh3c/dw== —–end public key—–
+now we should pass flag to openssl and verify the flag using it, but first we need to base64 decode the flag.
+decryption
+voila! the flag is: uutctf{hidden_0ni0ns_should_be_harvested}
+
+
+
+
+ ctf, tor, uutctf, writeup
+
+
+
+
+ 
+
+mir saman
+i'm currently an it phd. candidate at urmia university. i'm interested in social network analysis, big data mining, and nlp in my academical field as well as guitar, nature, and android!		
+			view all posts by mir saman		
+
+
+
+
+
+  previous post 
+
+next post"
+VPN or TOR? This is the Problem,/Anonymity Networks/,"april 13, 2019
+
+				vpn or tor? this is the problem			
+anonymity networks
+
+
+ 
+
+
+ 
+
+
+
+i just saw a post in tor stack exchange titled “is it recommended that we use a vpn along with tor?” and wanted to post about using vpn and tor alongside. previously, i’ve posted socks rocks! the good, the bad and the ugly and socks rocks again! and this post is conclusion of the posts.
+
+actually vpn hides your ip from isp but the vpn server will know your real ip address and your packets’ destination.
+tor uses three extra (software-based) router in order to hide your ip from destination and routers. (actually the first router knows your real ip but does know the destination. final router knows destination but does not know your real ip). it is considered in tor that the routers do not share the information, else they can identify your session and ip.
+based on the above, you can use tor through vpn or vpn through tor.
+ in vpn through tor, you will connect to vpn server from tor. vpn does not know your real ip (knows the final router’s ip) but the destination does not know you’re requesting through tor. in tor through vpn, you will connect to tor through vpn, therefore vpn provider will know your real ip but wont know the destination. first router will know the vpn’s ip (not your real ip).
+case 1 can help you when you want use tor and access sites such as google which has banned access from tor which is discussed in socks rocks again!.  case 2 can help you in privacy, because you add an extra layer of ip to access you.  the following picture depicts the two cases:
+case 1: vpn through tor, case 2: tor through vpn
+
+
+
+
+ tor, vpn
+
+
+
+
+ 
+
+mir saman
+i'm currently an it phd. candidate at urmia university. i'm interested in social network analysis, big data mining, and nlp in my academical field as well as guitar, nature, and android!		
+			view all posts by mir saman		
+
+
+
+
+
+  previous post 
+
+next post"
+Presenting Hidden Services in Onion Harvester,/Anonymity Networks/Conference/,"march 8, 2019
+
+				presenting hidden services in onion harvester			
+anonymity networksconference
+
+
+ 
+
+
+ 
+
+
+
+my project as onion harvester is accepted in offseconf 2019. onion harvester is one of the projects i’m working on it partly. i give a brief presentation about working mechanism of tor network and talked about hidden services.
+
+after that, i talked about computations and resources needed in order to find all the addresses.
+i uploaded the video to my youtube channel and here are some of the photos.
+
+the video is here:
+
+
+onion harvester
+
+
+
+
+ hidden service
+
+
+
+
+ 
+
+mir saman
+i'm currently an it phd. candidate at urmia university. i'm interested in social network analysis, big data mining, and nlp in my academical field as well as guitar, nature, and android!		
+			view all posts by mir saman		
+
+
+
+
+
+  previous post 
+
+next post"
+Scooby Tor! Where Are You?,/Anonymity Networks/Urmia/,"february 28, 2019
+
+				scooby tor! where are you?			
+anonymity networksurmia
+
+
+ 
+
+
+ 
+
+
+
+i notified that the exit node ip address in the tor browser is not the real exit node ip. then i started to drive the mystery machine for investigating the case. real ip! where are you?
+
+motivation for scooby tor!
+someone in twitter asked me an interesting question which i wasn’t noticed before. the question was:
+why the ip address which is shown in whoer is not same as the exit node which is shown in tor browser?!shadow
+therefore i started to investigate the cause which was very interesting.
+i think this problem has a similar situation of the scooby doo series. there is an unknown subject (the ip address displayed in whoer), the bad guy behind the ghost mask (the ip address shown in tor browser) and the clues!
+the question
+in the first step, i myself checked the case in order to see the task and verified. i tested with whoer and whatismyip. the results are the same.
+
+the steps
+we now faced the ghost! and scooby started to fear of the case. but with the help of velma, they started to collect the clues.
+the first think that i did, was finding the exit nodes of tor in other way. i connected to tor control port using telnet, but i had to define a password for connecting to it.
+adding password to tor control port
+using the following command, one can generate a hashed password for tor:
+tor --hash-password password > pass.txt
+then enter the value inside pass.txt to the tor config file, torrc which is inside the tor browser folder if you’re using windows or in /etc/tor if you’re using *nix systems, as the following:
+hashedcontrolpassword value
+the value is something like 16:hashedvalue. now you can restart tor and connect to tor control port or use the charming python script in order to display the list of exit nodes. credits go to tor stack exchange. but i’ve changed some parameters:
+first of all changed the control port from 9051 to 9151 which is the default port for tor control port.then added my password to the authenticate() functions.run the script
+all the things are ok. the ghost ip address is changed but you can see the list of exit nodes. here is the proof:
+
+therefore, tor creates multi circuits and use them as the connection manager. but the circuit which is used for displaying the exit node to the user may not be the same as real exit ip address.
+
+
+
+
+ exit node, tor
+
+
+
+
+ 
+
+mir saman
+i'm currently an it phd. candidate at urmia university. i'm interested in social network analysis, big data mining, and nlp in my academical field as well as guitar, nature, and android!		
+			view all posts by mir saman		
+
+
+
+
+
+  previous post 
+
+next post"
+Connecting to Hidden Mail Server using Android,/AndroJava/Anonymity Networks/Programming/,"february 1, 2019
+
+				connecting to hidden mail server using android			
+androjavaanonymity networksprogramming
+
+
+ 
+
+
+ 
+
+
+
+ my contribution in k9 android mail client 
+my contribution in k9 android mail client
+k-9 is an attractive, open-source email client for android with support of imap, pop3, smtp, and exchange protocols. hence, this client does not support proxy feature. this problem is referenced in #704 #980 #2619. in this post i will talk about my contribution in k-9 project by adding socks proxy feature, which can be used for connecting hidden mail services.
+in previous post, i described about connecting thunderbird, an open source email client for pc, to a hidden mail service. in this post i will talk about modifying k-9 mail and connecting android client to the hidden mail service.
+
+problem definition
+despite k-9 mail client is very powerful, it does not support socks proxy feature. socks proxy can be used for accessing the internet in some special cases such as in schools, universities, or accessing tor network.
+by adding socks proxy, one can connect to hidden mail services or to normal mail services by hiding his real ip address.
+my solution
+i have worked with tor hidden network and programming sockets in order to be connected through tor network. you may check my answer in tor stack exchange.
+therefore i just forked k-9 mail project into mr tajbakhsh github and worked on adding socks proxy feature. i added a user interface part and modified the main connection source code.
+modifications
+you can check the full list of modifications in github link. but there are two parts: one for the ui and one for the connection part.
+ui part
+app/core/src/main/java/com/fsck/k9/k9.java app/core/src/main/java/com/fsck/k9/preferences/globalsettings.java app/core/src/main/java/com/fsck/k9/preferences/settings.java  app/ui/src/main/java/com/fsck/k9/ui/settings/general/generalsettingsdatastore.kt  app/ui/src/main/res/values/strings.xml  app/ui/src/main/res/xml/general_settings.xml 
+connection part
+ mail/protocols/imap/src/main/java/com/fsck/k9/mail/store/imap/imapconnection.java  mail/protocols/pop3/src/main/java/com/fsck/k9/mail/store/pop3/pop3connection.java  mail/protocols/smtp/src/main/java/com/fsck/k9/mail/transport/smtp/smtptransport.java  mail/protocols/webdav/src/main/java/com/fsck/k9/mail/store/webdav/webdavstore.java
+connecting to hidden mail server
+i previously configured a hidden mail server using tor and hmailserver. in another post, i described about connecting to the configured hidden mail server using thunderbird.
+step 1: generating the socks supported apk
+the generation of apk is out of scope of this post, but generally you can fork the code from my github repository and import it to android studio to get an apk.
+compiling k-9 mail client with socks proxy support
+step 2: installing tor on android
+this step is straight forward. just install tor from google play and run it.
+
+step 3: install and configure k-9 with socks support
+after compiling k-9 with socks support, you can add email accounts based on hidden mail server.
+
+every thing is done. just start tor in your android phone and check socks proxy in k-9 network configuration which added.
+conclusion
+i added socks proxy feature to k-9, the powerful and open source email client in android. by using this feature, one can be connect to the email accounts if is behind socks proxy or can be used in order to make a connect to hidden mail service. enjoy!
+
+
+
+
+ android, email client, k9, tor
+
+
+
+
+ 
+
+mir saman
+i'm currently an it phd. candidate at urmia university. i'm interested in social network analysis, big data mining, and nlp in my academical field as well as guitar, nature, and android!		
+			view all posts by mir saman		
+
+
+
+
+
+  previous post 
+
+next post"
+Connecting to Hidden Mail Server,/Anonymity Networks/Server/Tutorial/,"january 25, 2019
+
+				connecting to hidden mail server			
+anonymity networksservertutorial
+
+
+ 
+
+
+ 
+
+
+
+in the previous post, i’ve talked about configuring a hidden email server using hmailserver. in this post i will talk about how to access this hidden email server. i’m using thunderbird as email client, tajbakhsh.fake as the fake domain of email server (and accounts), two users ([email protected] and [email protected]).
+during all the processes, i assume that the email server is configured as previous post and client has access to the tor network.
+
+installing thunderbird
+thunderbird installation is straight forward. just download the binary from  thunderbird  and start installation process. the next step is the installation of torbirdy addon for thunderbird which allows to tunnel the traffic of thunderbird through a socks proxy. the installation steps are depicted in the following pictures:
+
+if you need further information about addon installation process, please refer to mozillazine.
+configuring addresses
+after installing torbirdy and adding a new email address, you should configure the correct onion addresses for the thunderbird from tools -> accounts section. for the imap and smtp section, add the onion address of the hidden email server which is generated previously.
+
+if you want to more configure torbirdy, just click the green text in the right (below) corner of the thunderbird.
+
+at the end, connecting to the hidden email server
+after setting the onion addresses, the connection process can be start by just clicking inbox icon in the newly configured email address.
+
+same process should be taken to send an email. beside, i took hmailserver logs beside thunderbird to show the connection logs inside hmailserver.
+
+
+
+
+
+ email server, hidden service, thunderbird, tor
+
+
+
+
+ 
+
+mir saman
+i'm currently an it phd. candidate at urmia university. i'm interested in social network analysis, big data mining, and nlp in my academical field as well as guitar, nature, and android!		
+			view all posts by mir saman		
+
+
+
+
+
+  previous post 
+
+next post"
+Configuring a Hidden Email Server,/Anonymity Networks/Cryptography/Tutorial/,"january 17, 2019
+
+				configuring a hidden email server			
+anonymity networkscryptographytutorial
+
+
+ 
+
+
+ 
+
+
+
+in this post, i will talk about configuring an email server which is accessible using tor. using tor will make its ip to be hidden, also accessible if it is behind nat (inside a home computer without a public ip). but the main question is why one should use this kind of scenario?
+many people may not trust messaging services such as telegram or whatsapp but want to have their own private communication system. in this tutorial, you can run your own mail server in your home lan and access it through internet without spending money for public ip or vps.
+for the email server part, i will use hmailserver, an open source email server developed for windows.
+
+installing email server
+hmailserver is a straight forward email server with built-in sql server.  i’ve installed it and shared the screen shots below.
+hmailserver installation process 1 hmailserver installation process 2 hmailserver installation process  3 hmailserver installation process 4 hmailserver installation process 5 hmailserver installation process 6 hmailserver installation process 7 hmailserver installation process 8 hmailserver installation process 9 hmailserver installation process 10
+configuring email server
+in this section, i configure the hmailserver with the following configuration:
+creating a self-signed certificate (for imaps and smtps) smtp with ssl/tls (port 465)imap with ssl/tls (port 993)disabling hmailserver access to internet (only has access to 127.0.0.1)creating a fake domain (tajbakhsh.fake) for email accounts
+ creating a self-signed certificate 
+using  ibm knowledge center , you can create certificate and private key which will be used in hmailserver:
+openssl req -newkey rsa:4096 -nodes -keyout key.pem -x509 -days 3650 -out certificate.pem
+adding certificates to hmailserver
+smtps and imaps
+the configuration for ports, certificate and protocols are depicted below.
+configuring smtpconfiguring imap
+disabling hmailserver access
+you may follow wikihow for disabling a program (hmailserver.exe) from accessing the internet. just add an outbound rule for hmailserver.exe and select block in connection section.
+firewall #1 firewall #2 firewall #3
+creating fake domain
+the email server is accessible only in the lan (but from hidden service of tor), therefore domain is not important, but hmailserver needs for distinguish between the users. therefore i added tajbkahsh.fake as the domain of email server.
+adding domain #1adding domain #2email account #1email account #2
+configuring hidden service
+as i described before in “control your home iot” post, you can run a hidden service. in this scenario, there is one onion address with two ports: one for imaps and the other for smtps. the configuration are below:
+torrc fileadding ports to torrcafter running tor, the address can be found in hidden directory
+conclusion
+in this post, i’ve configured hmailserver as email server behind tor as a hidden email service. in the next post, i will describe how to connect to this hidden service from pcs.
+
+
+
+
+ email server, hidden service, hmailserver, tor
+
+
+
+
+ 
+
+mir saman
+i'm currently an it phd. candidate at urmia university. i'm interested in social network analysis, big data mining, and nlp in my academical field as well as guitar, nature, and android!		
+			view all posts by mir saman		
+
+
+
+
+
+  previous post 
+
+next post"
+Socks Rocks Again!,/Anonymity Networks/Personal/Tutorial/,"january 15, 2019
+
+				socks rocks again!			
+anonymity networkspersonaltutorial
+
+
+ 
+
+
+ 
+
+
+
+in a “socks rocks! the good, the bad and the ugly” post, i wrote about configuring openvpn, tor and proxifier in order to hide the real ip and use web sites such as google which do not allow lots of services for tor exit nodes.
+literally, the ugly is removed from the previous post and openvpn directly connects to socks.
+
+the problem
+when using the internet, one may want to use tor for surfing the net. the problem arise here where some sites block access to the site from the tor network, more specifically they block the ip addresses of the exit nodes, sites such as google or cloudflare or (optionally) blockchain wallet.
+previous solution
+previously, i published a post about how to configure proxychains to tunnel the traffic between client (pc) and vpn server (openvpn). proxychains is a tunneling software for flowing the traffic through proxy servers; in this case tor socks address where the tor runs. usually this address is 127.0.0.1:9050 or 127.0.0.1:9150.
+the problem with proxychains
+i have faced connection problems where if for some times you do not use the internet, proxychains will disconnect the traffic between pc and openvpn server. for solving this problem i made an infinitive ping request, so the connection is alive all the time.
+better socks rocks
+a better solution i’ve found recently is the built-in support of proxifying connection in openvpn client. but you should use the default client, not the limited ones that published by others.
+the following pictures shows the settings in openvpn and the configuration for using tor.
+openvpn settings
+proxy settings in openvpn client
+openvpn connects to tor socks port.
+result
+if you want to use tor but do not want to get restricted connection, you can connect to openvpn server through tor socks5 proxy. now your real ip is hidden from openvpn server (and the sites you visit them) but the exit node is not tor but it is openvpn.
+it is reasonable to got an increase in reply time of packets. as an example i get 300-400 ms time in pinging 8.8.8.8
+
+
+
+
+ openvpn, socks, tor
+
+
+
+
+ 
+
+mir saman
+i'm currently an it phd. candidate at urmia university. i'm interested in social network analysis, big data mining, and nlp in my academical field as well as guitar, nature, and android!		
+			view all posts by mir saman		
+
+
+
+
+
+  previous post 
+
+next post"
+A Brief Introduction to BitCoin and BlockChain,/Conference/Cryptography/Tutorial/,"december 16, 2018
+
+				a brief introduction to bitcoin and blockchain			
+conferencecryptographytutorial
+
+
+ 
+
+
+ 
+
+
+
+i recently had a talk about bitcoin and mainly blockchain technology at application of new generation technologies session which was held on 7 dec 2018 in urmia.
+
+topics around bitcoin and blockchain
+i started my talk by introducing myself and how i met the anonymity networks, bitcoin and blockchain technologies. the main reason was the operation onymous. 
+my talk was made up of two parts: bitcoin which i did not talked in details and the blockchain which i was talked a bit more with some details.
+the talk continued about the attacks, which distributed networks are faced with, 
+the slides can be found on slideshare and the video is here:
+
+
+
+
+
+
+
+ bitcoin, blockchain, introduction, session
+
+
+
+
+ 
+
+mir saman
+i'm currently an it phd. candidate at urmia university. i'm interested in social network analysis, big data mining, and nlp in my academical field as well as guitar, nature, and android!		
+			view all posts by mir saman		
+
+
+
+
+
+  previous post 
+
+next post"
+Live TV feature added to Media Home System,/Media/Media/Personal/Tutorial/,"november 28, 2018
+
+				live tv feature added to media home system			
+mediamediapersonaltutorial
+
+
+ 
+
+
+ 
+
+
+
+i’ve posted about creating a media home system using kodi sometimes ago.
+after that i configured kodi on my laptop and smart phone which they use the same database shared in home network.
+now, with the help of a small tv card, i’ve added live tv feature to the whole media home.
+
+media home
+i download and save the movies, tv series and musics to my home lan which can be shared over the home network. for this aim, i use a nas server attached to my home lan. previously, i’ve wrote about creating a media home system using kodi. now i added the live tv feature which does not use internet for watching digital tv. following is a picture of a small part of home lan.
+home lan [nas server]
+installing tv card
+one of the ways is that to use windows to decode the digital tv signals and share on the network. nextpvr did a well job on that. you can use the sharing server in windows and receive the decoded stream in any attached kodi client. but for my tv card, nextpvr cannot detect it in windows 10. it is related to the drivers which are not compatible. so linux helps everywhere.
+kodi 2
+using linux as decoder
+ubuntu linux detected automatically my tv card and mount it at: /dev/dvb/adapter0/frontend0
+first of all i tried to use it on linux to test if it is working or not. i used metv as the client. the result was successful.
+metv player
+setup the streamer
+the next step was to find a streamer server which has a client in kodi too. with a small search i found vdr tool. the next steps are very straight. vdr vnsi was the tool i installed. the steps i’ve followed was from kodi help center.
+final step
+final step was the installation of vdr vnsi addon in every kodi client i had. in the configuration i just entered the ip address of vdr server. everything is ok. the tv and radio ability is added to kodi.
+i just recorded a video of all features i’ve added to kodi.
+
+
+
+
+
+ kodi, live tv, media center, media home, osmc
+
+
+
+
+ 
+
+mir saman
+i'm currently an it phd. candidate at urmia university. i'm interested in social network analysis, big data mining, and nlp in my academical field as well as guitar, nature, and android!		
+			view all posts by mir saman		
+
+
+
+
+
+  previous post 
+
+next post"
+Ilam CTF: Android Reverse WriteUp,/AndroJava/WriteUp/,"november 24, 2018
+
+				ilam ctf: android reverse writeup			
+androjavawriteup
+
+
+ 
+
+
+ 
+
+
+
+ilam ctf has been hold on 23rd nov 2018. unfortunately i’ve planned other things for 22-23 nov 2018 and because of the delay in holding the ctf, i couldn’t attend this ctf.
+however, i could download the android reverse question for future analysis. and the flag is here:
+ilam_ctf_0a095194dbcf4f798751aaafdfb_1db6b2ed339f4698b6b38b5e7ae
+but the writeup!
+
+start to android reverse writeup
+i’ve installed it on an emulator and the application crashed.
+ilamctf 1
+i’ve analyzed the crash logs and found an arithmetic exception at mainactivity:
+ilamctf 2
+using apk studio and jadx i’ve found and fixed the division be zero which was put in the code.
+ilamctf 3
+after that i’ve found that the key was hidden in some functions, in which they are playing with an initial string (awxhbv9jdgzfm).
+ilamctf 4
+analysis
+then i just copied the code of functions to my java editor and started to play with them.
+ilamctf 5
+the result was something like this:
+ilamctf 6
+as you see, the results from f3 start to change in characters. i mean, they all looks like base64 till f3 but then, they change to something odd.
+i’ve checked the functions. all the functions change a part of input string and add a new part to it. i though that it was an encrypted string but i did not found any cryptographic function call or even dynamic call inside the code. then the key should be base64 encoded!
+the flag
+as a simple test, i just put the parts together and decoded them.
+voila. the flag was in there:
+ilamctf 7
+there was just a point. they have added an extra part to the base64 encoded text which i removed it. you can find the extra part at yoyo.yo function which ends with an arithmetic exception.
+therefore, the flag is:
+ilam_ctf_0a095194dbcf4f798751aaafdfb_1db6b2ed339f4698b6b38b5e7ae
+the original apk is attached here for who may interest.
+download ilam ctf android reverse apk
+
+
+
+
+ android, ctf, ilamctf, writeup
+
+
+
+
+ 
+
+mir saman
+i'm currently an it phd. candidate at urmia university. i'm interested in social network analysis, big data mining, and nlp in my academical field as well as guitar, nature, and android!		
+			view all posts by mir saman		
+
+
+
+
+
+  previous post 
+
+next post"
+T-REX: Playing with Dino!,/AndroJava/Programming/,"october 28, 2018
+
+				t-rex: playing with dino!			
+androjavaprogramming
+
+
+ 
+
+
+ 
+
+
+
+i hardly play the dino game which is created by google and is available in chrome browser for playing while there is no internet connection. but the game itself is popular and can be found in different platforms. recently i’ve changed two of them and now cacti and birds are ineffective.
+simple javascript running t-rex version
+there are lots of free versions of the game. take running t-rex for example. the java script code is pretty formatted and ready to be deactivated!
+dino 1
+medium android running t-rex version
+i’ve faced with an android version of the game. so started to find where the game finishes. based on jadx decompiler, the following code was the main part of detecting game over.
+dino 2
+based on smali code injection techniques, i’ve deactivated the functions. now the dino can run freely both in javascript and android!
+dino javascript (click to see the animated gif version):
+dino javascript
+dino android (click to see the animated gif version):
+dino android
+
+
+
+
+ dino, game, reverse engineering, t-rex
+
+
+
+
+ 
+
+mir saman
+i'm currently an it phd. candidate at urmia university. i'm interested in social network analysis, big data mining, and nlp in my academical field as well as guitar, nature, and android!		
+			view all posts by mir saman		
+
+
+
+
+
+  previous post 
+
+next post"
+Onion Harvester: First step to TOR Search Engines,/Academic/AndroJava/Search Engine/,"november 24, 2017
+
+				onion harvester: first step to tor search engines			
+academicandrojavasearch engine
+
+
+
+ 
+
+
+
+knowing all possible web paths in the world is the initial step for making a search engine (se). by means of  se one can analyze the web for the material he/she likes. in normal domain name system, each tld provider (top level domain) can sell or release list of all its domains. as an example .com tld can sell or release all the domains which are end with “.com“. but the problem is more complicated in tor (or other hidden service providers). in this post i will talk about my tool named onion harvester and how to find initial points for finding hidden services to be crawled.
+tor network
+
+i have investigated about how to find all onion addresses. my question in tor stack exchange network can be found this link. in a conclusion there are two ways to find all the onion addresses, starting points for crawling and making a search engine.
+
+ run as a hidden service directory which a hidden service publish its address through 6 of 9 hsdirs for being found by the users whom tries to connect.
+brute force all address space which is exponentially time consuming.
+
+the first method fails because the 9 hsdirs is controlled by the tor network itself. you can check the 9 hsdirs status in this link. detailed information about the 9 hsdirs can be found this link. therefore you cannot add yourself as a hsdir without verification of the tor developers. in addition, as defalt answered to my question in the tor stack exchange network:
+“harvesting onion addresses has been fixed in next generation tor onion services so you can’t fetch list of running onion services by hosting your own hsdir anymore.”
+in other point of view, tor is open source and you can own and run your own tor network which you can add your hsdirs. but users should use your network instead of tor!
+my own tor network
+check this link for finding how to run your own tor network.
+but in general, you may harvest the whole address space of onion for specific ports to check if the service is open or not. i have developed a small multi thread java application named “onion harvester” to harvest the onion addresses. i generate onion addresses starting from “aaaaaaaaaaaaaaaa.onion” to “7777777777777777.onion”. the address is base-32 which contains alphabet and numbers except (0,1,8,9). there are totally  addresses!
+as a small program, i’ve added some flexibility to it:
+
+if the program got exit signal, it stores the next onion address which should be resume the program.
+i’ve added a switch (–start) the resume the scanning.
+i’ve added configurable local tor socks5 address. by default tor bundle uses 127.0.0.1:9150 as its socks5 proxy and tor binary in linux uses 127.0.0.1:9050.
+the project is opensource and you can find it in mr tajbakhsh github account in the repository.
+
+onion harvester in action:
+onion harvester in action
+you may fork or use the project for help me creating the onion database. if you want to contribute, contact me at saman [@] mstajbakhsh [.] ir
+
+
+
+
+ onion address, onion harvester, tor
+
+
+
+
+ 
+
+mir saman
+i'm currently an it phd. candidate at urmia university. i'm interested in social network analysis, big data mining, and nlp in my academical field as well as guitar, nature, and android!		
+			view all posts by mir saman		
+
+
+
+
+
+  previous post 
+
+next post"
+Web Application Vulnerability: SQLi,/Tutorial/University/,"november 2, 2017
+
+				web application vulnerability: sqli			
+tutorialuniversity
+
+
+ 
+
+
+ 
+
+
+
+last wednesday, i have a small talk about sqli web application vulnerability and how to prevent it. here, i write about the tools and resources which can be used in learning the sqli learning and prevention.
+sqli session
+
+the one of the best resources for learning lies in practicing. practice make perfect. therefore, penetration the vulnerable web application will make the learning much easier. damn vulnerable web application (dvwa) is one the vulnerable web applications for learning why and how the applications gets the vulnerabilities.
+some of sample injections tests on the special vm i’ve created for this session is below:
+sqli 1
+sqli 2
+sqli 3
+the other tools are for dynamically analyzing web application:
+sqlmap
+nosqlmap
+sqliv
+grryfin
+i also talked about how to statically analyze the web application. i’ve introduced rips which is the one of the most powerful frameworks for finding bugs in web application. the following image is a screenshot of rips scanner for dvwa 1.9.
+sqli rips
+also the web application firewalls (wafs) will help web servers before passing the user input to the vulnerable web application such as modsecurity which can be handle user input along with apache, and other wafs …
+in the end the session ended with some fun. 🙂
+you may follow the sessions from uut ceit group:
+uut ceit instagram
+uut ceit telegram channel
+or in their web site at uutidev
+sqli and prevention session
+
+
+
+
+ dynamic analysis, session, static analysis, web application
+
+
+
+
+ 
+
+mir saman
+i'm currently an it phd. candidate at urmia university. i'm interested in social network analysis, big data mining, and nlp in my academical field as well as guitar, nature, and android!		
+			view all posts by mir saman		
+
+
+
+
+
+  previous post 
+
+next post"
+“Introduction to Cryptography and PGP” Workshop,/Cryptography/University/,"october 13, 2017
+
+				“introduction to cryptography and pgp” workshop			
+cryptographyuniversity
+
+
+ 
+
+
+ 
+
+
+
+i have a workshop titled “introduction to cryptography and pgp” at urmia university of technology. i talked about basic concepts of signature and encryption using asymmetric cryptography. then i talked about pgp which is one of the main usages of this system. i followed the workshop with configuring thunderbird and gpg4win for applying pgp in email system. you may find the contents in my previous post about gpg in thunderbird and the way pgp works.
+the pictures of this session is here.
+
+introduction to cryptography and pgp 1
+introduction to cryptography and pgp 2
+introduction to cryptography and pgp 3
+introduction to cryptography and pgp 4
+introduction to cryptography and pgp 5
+introduction to cryptography and pgp 6
+other sessions or information can be noticed from uut computer society’s telegram channel.
+
+
+
+
+ gpg, pgp, university, uut, workshop
+
+
+
+
+ 
+
+mir saman
+i'm currently an it phd. candidate at urmia university. i'm interested in social network analysis, big data mining, and nlp in my academical field as well as guitar, nature, and android!		
+			view all posts by mir saman		
+
+
+
+
+
+  previous post 
+
+next post"
+PGP: How it works?,/Cryptography/Personal/Tutorial/,"september 30, 2017
+
+				pgp: how it works?			
+cryptographypersonaltutorial
+
+
+ 
+
+
+ 
+
+
+
+in “encrypting emails using pgp/gpg”, i have described how to configure gpg (pgp) + enigmail + thunderbird for sending signed and encrypted emails. but the inner process of pgp is not described. in this post, i will describe how pgp works and the emulation process of pgp will be covered by the nice cryptography tool named cryptoolv2.
+pgp
+
+what is pgp: a brief introduction
+symmetric encryption is very good and have good performance/speed in encryption/decryption. but the main problem is in transferring keys between the alice and bob. alice and bob are two characters whom want to send encrypted messages to each other and is commonly used names in cryptographic systems. for more information check the alice and bob.
+in other side, the power of asymmetric encryption is considerable. every participant has two keys: the public key (e) which is accessible by everyone in the system and the private key (d) which is only accessible for the participant. one of the major abilities of this cryptography system is that the key transfer is very easy, because of the public key. beside its abilities, it lags in encryption/decryption of large amount of data. if you want to know more about asymmetric encryption/decryption and the meaning of signature (encrypting with private key) and encryption (encrypting with public key), check public-key cryptography.
+pgp stands for pretty good privacy which uses the power of asymmetric and symmetric encryption. symmetric encryption lacks in key transfer which can be transferred by asymmetric encryption. the key size is not large in comparison of data which is going to be encrypted/decrypted.
+so the system is ok. encrypt the content with a random symmetric key (k). sign and encrypt k with sender’s private key and receiver’s public key. the system is depicted in below but in the figure, sender does not sign the k, just encrypts with the receiver’s public key.
+pgp overall system
+cryptool
+cryptool is a nice gui based tool for testing and learning cryptography. i’ve used version 2 of the program which can be run in microsoft windows. the tool is accessible from  cryptoolv2. the following picture shows a screenshot of the program in action.
+cryptool v2
+pgp in cryptool
+i have configured the pgp protocol in cryptool and add signature and encryption for the system. the first picture shows the overall system and process.
+pgp overall system
+the following picture shows the detailed work of each part. it should be noticed that there are some elements in the figure which rsa stands for asymmetric encryption/decryption system, aes for symmetric encryption/decryption and key generator for generating private and public keys.
+pgp detailed
+the final picture shows the system in action. as shown, the decrypted message is the same as the plain text message (“hello world!“).
+pgp in action
+the project is attached in the following file. you may download and test the file as you like in cryptool v2.
+download link
+
+
+
+
+ cryptography, cryptool, encryption, pgp, signature
+
+
+
+
+ 
+
+mir saman
+i'm currently an it phd. candidate at urmia university. i'm interested in social network analysis, big data mining, and nlp in my academical field as well as guitar, nature, and android!		
+			view all posts by mir saman		
+
+
+
+
+
+  previous post 
+
+next post"
+Control your home IoT: Remotely and Graphically,/IoT/Personal/RaspberryPi/,"september 8, 2017
+
+				control your home iot: remotely and graphically			
+iotpersonalraspberrypi
+
+
+ 
+
+
+ 
+
+
+
+in the “control your home iot”, the configuration steps for controlling the home iot system remotely, are described. in this post i will describe how to control your system graphically!
+
+the main steps for this installation is the same as previous post, including: installing tor and configuring hidden service.
+here i will describe remote connection using vnc. vnc stands for virtual network computation and is a protocol for graphically control remote servers. also there is a nice web gui for vnc named novnc. i will describe installing vnc4server as vnc server and novnc.
+installing vnc4server
+in this step, just install vnc4server in your home iot raspbian:
+iot raspbian with vnc
+$ sudo apt-get update
+$ sudo apt-get install vnc4server
+then start the vnc4server using vnc4server command:
+$ vnc4server
+then the vnc4server asks you to provide a password with maximum 8 characters.
+starting vnc4server
+installing novnc
+novnc can be installed using apt-get. you may check this link for more documentation.
+installing novnc
+$ sudo apt-get install novnc
+but i prefer launching by their code in github. the commands are from this link.
+$ echo y | sudo apt-get install git websockify<br /><br /><br /><br />
+
+$ git clone git://github.com/kanaka/novnc
+launch without wss/ssl support:
+$ ./novnc/utils/launch.sh --vnc [ip]:[port]
+launch with wss/ssl support:
+$ ./launch.sh --cert /path/self.pem  --vnc [ip]:[port]
+cloning novnc
+and voila! everything is ready for fire up. place 127.0.0.1 as ip and 5901 as port in the above commands.
+$ ./novnc/utils/launch.sh --vnc 127.0.0.1:5901
+starting novnc
+as you see, it will accept port 6080 from browser and will proxy the input commands to the vnc port (5901).
+if you have forgot to start vnc4server, you should start it.
+if you forgot the password for vnc, you can reset it by typing vncpasswd in terminal.
+the final step is to add tor hidden services.
+i will add the following line to the previously configured torrc file and restart tor:
+hiddenserviceport 80 127.0.0.1:6080
+the sequence for remote desktop service is as follows:
+iot raspbian with vnc – connection sequence
+every thing is ok. just start tor browser in anywhere and type your hostname (check how to create tor hidden service in previous post) in tor browser.
+iot raspbian with vnc – novnc
+after pressing connect button, you should insert password:
+iot raspbian with vnc – password
+and if the password is correct, you have accessed remote desktop with vnc.
+iot raspbian with vnc – done
+
+
+
+
+ hidden service, iot, novnc, raspberrypi, tor, vnc
+
+
+
+
+ 
+
+mir saman
+i'm currently an it phd. candidate at urmia university. i'm interested in social network analysis, big data mining, and nlp in my academical field as well as guitar, nature, and android!		
+			view all posts by mir saman		
+
+
+
+
+
+  previous post 
+
+next post"
+Control your home IoT,/IoT/Personal/,"august 18, 2017
+
+				control your home iot			
+iotpersonal
+
+
+ 
+
+
+ 
+
+
+
+by means of iot lots of things can be connected and controlled by internet such as smart homes. in this small tutorial i will discuss about personal smart home solutions and how to remotely control them. in small word “control your home iot system over tor” 🙂
+
+solutions
+for making your home smart and iot there are multiple solutions. google home, amazon echo, apple home kit, are some of the examples. beside, open source projects can be used to install smart home equipment such as hassbian or generally raspbian.
+installing raspbian virtually
+here i will discuss about installing raspbian virtually. it should be mentioned if you need to install raspbian you do not need to install it on raspberripi, alternately you can install it virtually. but you should use special emulators for running raspbian, since it is compiled in arm architecture not in intel x86 or amd x64 or etc.
+i will follow instructions from azeria labs to install virtual raspbian on qemu emulator on ubuntu 16.04 x64.
+install qemu-system in ubuntu
+sudo apt-get install qemu-system
+installing qemu emulator
+download raspbian and kernel
+download raspbian and the kernel for the emulator. for this tutorial i’ve used raspbian jessie from this link, qemu rpi kernel can be downloaded from this link. i’ve downloaded 2017-07-05-raspbian-jessie.zip (raspbian) and kernel-qemu-4.4.34-jessie (kernel).
+then unzipped the raspbian:
+$ unzip 2017-07-05-raspbian-jessie.zip.zip
+
+archive:  2017-07-05-raspbian-jessie.zip
+  inflating: 2017-07-05-raspbian-jessie.img
+
+$ fdisk -l 2017-07-05-raspbian-jessie.img
+
+disk 2017-07-05-raspbian-jessie.img: 4.3 gib, 4661483520 bytes, 9104460 sectors
+units: sectors of 1 * 512 = 512 bytes
+sector size (logical/physical): 512 bytes / 512 bytes
+i/o size (minimum/optimal): 512 bytes / 512 bytes
+disklabel type: dos
+disk identifier: 0x970b8044
+
+device                          boot start     end sectors  size id type
+2017-07-05-raspbian-jessie.img1       8192   93596   85405 41.7m  c w95 fat32 (lba)
+2017-07-05-raspbian-jessie.img2      94208 9104459 9010252  4.3g 83 linux
+
+as you see above, (the last line) img2 part start from 94208.  94208 x 512 = 48234496 (bytes).
+$ sudo mkdir /mnt/raspbian
+$ sudo mount -v -o offset=48234496 -t ext4 2017-07-05-raspbian-jessie.img /mnt/raspbian
+$ sudo nano /mnt/raspbian/etc/ld.so.preload
+and comment out every line starting with '#'
+
+$ sudo nano /mnt/raspbian/etc/fstab
+from azeria labs:
+if you see anything with mmcblk0 in fstab, then:
+
+replace the first entry containing /dev/mmcblk0p1 with /dev/sda1
+replace the second entry containing /dev/mmcblk0p2 with /dev/sda2, save and exit.
+
+
+finally unmount the image.
+$ sudo umount /mnt/raspbian
+and run qemu with the following command:
+$ qemu-system-arm -kernel kernel-qemu-4.4.34-jessie -cpu arm1176 -m 256 -m versatilepb
+-serial stdio -append ""root=/dev/sda2 rootfstype=ext4 rw"" -hda 2017-07-05-raspbian-jessie.img
+-redir tcp:5022::22 -no-reboot
+
+as you will see, the qemu will start raspbian. it is just like you’ve write the raspbian image on sdcard and insert to your raspberrypi. now the os is ready.
+starting the raspbian:
+booting raspbian
+and vola:
+raspbian jessie
+you can enable ssh using
+sudo service ssh start
+then you can connect using
+ssh [email protected] -p 5022
+default user is pi and password is raspberry.
+ssh to raspbian
+remote control alternatives
+for the aim of remote control, there are some scenarios.
+1) using mqtt like protocols. in this scenario, your smart home solution is behind nat and can send data to a public mqtt server (or your private one) but you cannot send and receive massive data such as remote desktop.
+2) opening ports in your router or modem (or somthing like upnp). but this is risky and you should open direct access to your system.
+3) another alternative to avoid port forwarding, and send large data is using tor hidden services. it allows to connect to your iot system indirectly behind nat.
+installing tor and hidden service on raspbian
+raspbian is just like debian or ubuntu and its repository is full of arm compiled software such as tor. install tor on your system using the following command:
+$ sudo apt-get install tor
+installing tor in raspbian
+you may change your time zone and run following command to sych the raspbian time:
+$ sudo sntp -s time.nist.gov
+after installing tor, you should config the hidden service. edit /etc/tor/torrc with nano:
+$ sudo nano /etc/tor/torrc
+and add the following lines:
+hiddenservicedir /home/pi/desktop
+hiddenserviceport 22 127.0.0.1:22
+hiddenserviceport 80 127.0.0.1:6008
+and save the file using ctrl+o and then ctrl+x to exit. then restart tor using sudo service tor restart && tor as follows:
+starting tor in raspbian
+now you can find your onion address in /home/pi/desktop/hostname. it is 16 characters which will be ended with an “.onion”.
+ssh
+ssh is almost done. just config your client (outside your network) to connect to onion address:
+install proxy-connect in client:
+$ sudo apt-get install proxy-connect
+and change the /etc/ssh/ssh_config file and add the following lines:
+host *.onion
+    proxycommand connect -s localhost:9050 %h %p
+save the file and enjoy using ssh over tor. in my case:
+ssh [email protected]
+everything is ok. i can connect from everywhere to my home iot server.
+connected to my iot server over tor
+in my next post i will describe the remote desktop access to raspbian. 🙂
+
+
+
+
+ iot, remote access, smart home, tor
+
+
+
+
+ 
+
+mir saman
+i'm currently an it phd. candidate at urmia university. i'm interested in social network analysis, big data mining, and nlp in my academical field as well as guitar, nature, and android!		
+			view all posts by mir saman		
+
+
+
+
+
+  previous post 
+
+next post"
+IVRE! Drunk Frenchman Port Scanner Framework!,/Personal/Search Engine/Tutorial/,"june 2, 2017
+
+				ivre! drunk frenchman port scanner framework!			
+personalsearch enginetutorial
+
+
+ 
+
+
+ 
+
+
+
+you may have visit shodan (the iot search engine) or zoomeye (world wide port search engine). the systems are very useful to have a good view of world! 🙂
+
+but they have restriction for seeing results. for example shodan lets for unregistered users to view just 1 page (10 results). if you registered, the limitation is 5 pages. but again restriction!
+so what to do?
+
+you can view a good article about these type of engines in this link.
+but ivre, the drunk frenchman
+ivre is a python based, open source search engine for ports. but it is just an interface. the main power resists in nmap. ivre import the results of nmap and have a good interface.
+how to install it?
+you may visit the main tutorial provided by ivre to the most updated instructions!
+ivre has three module. scanner, web interface, database server. in its very fast and quick guide, it is suggested to install all of them in one machine.
+i follow the instructions in this link on a ubuntu 16.04 virtual machine.
+firstly  install dependencies:
+sudo apt-get -y install mongodb python-pymongo python-crypto apache2 dokuwiki
+but a small exception is in the above code -> they may forgot to add libapache2-mod-php which is needed to run php codes by apache2 in dokuwiki. so i add libapache2-mod-php (and also git + nmap) to the packages.
+sudo apt-get -y install mongodb python-pymongo python-crypto apache2 dokuwiki libapache2-mod-php git nmap
+after that just follow the steps:
+$ git clone https://github.com/cea-sec/ivre
+$ cd ivre
+$ python setup.py build
+$ sudo python setup.py install
+and configuration of web server:
+$ sudo -s
+# cd /var/www/html ## or depending on your version /var/www
+# rm index.html
+# ln -s /usr/local/share/ivre/web/static/* .
+# cd /usr/lib/cgi-bin
+# ln -s /usr/local/share/ivre/web/cgi-bin/* .
+# cd /var/lib/dokuwiki/data/pages
+# ln -s /usr/local/share/ivre/dokuwiki/doc
+# cd /var/lib/dokuwiki/data/media
+# ln -s /usr/local/share/ivre/dokuwiki/media/logo.png
+# ln -s /usr/local/share/ivre/dokuwiki/media/doc
+# cd /usr/share/dokuwiki
+# patch -p0 < /usr/local/share/ivre/dokuwiki/backlinks.patch
+# cd /etc/apache2/mods-enabled
+# for m in cgi rewrite ; do [ -l $m.load ] || ln -s ../mods-available/$m.load ; done
+# cd /usr/local/share/ivre/web/cgi-bin
+# sed -i 's/^\(\s*\)#rewrite/\1rewrite/' /etc/dokuwiki/apache.conf
+# service apache2 reload
+# exit
+if you want to view the search engine from your local network, you may face the following screen after pressing help.
+
+just edit /etc/dokuwiki/apache.conf and change the line:
+
+allow from localhost 127.0.0.1 ::1
+to
+#allow from localhost 127.0.0.1 ::1
+allow from all
+and vola!
+
+database initialization
+and follow the steps from ivre:
+$ ivre scancli --init
+this will remove any scan result in your database. process ? [y/n] y
+$ ivre ipinfo --init
+this will remove any passive information in your database. process ? [y/n] y
+$ ivre ipdata --init
+this will remove any country/as information in your database. process ? [y/n] y
+$ sudo ivre runscansagentdb --init
+this will remove any agent and/or scan in your database and files. process ? [y/n] y
+$ sudo ivre ipdata --download
+$ ivre ipdata --import-all --no-update-passive-db
+and everything is ok. just test some random ips. for example 50 random ips with 40 nmap processes.
+sudo ivre runscans --routable --limit 50 --processes 40
+wait for scan to be finished!
+and the result!
+
+
+
+
+
+ ivre, open source, port scanner, python, web
+
+
+
+
+ 
+
+mir saman
+i'm currently an it phd. candidate at urmia university. i'm interested in social network analysis, big data mining, and nlp in my academical field as well as guitar, nature, and android!		
+			view all posts by mir saman		
+
+
+
+
+
+  previous post 
+
+next post"
+Apache + Yarn + Spark: Play with Twitter data!,/Academic/Programming/Tutorial/,"april 23, 2017
+
+				apache + yarn + spark: play with twitter data!			
+academicprogrammingtutorial
+
+
+ 
+
+
+ 
+
+
+
+in this tutorial i want to write about using apache spark on ubuntu machines where you can develop big data analysis apps with it.
+first of all, i want to write a small and quick introduction to hadoop + spark environment. hadoop makes it possible to work with lots of computers in a cluster. work can be: storing files in cluster (hdfs – hadoop distributed file system), storing database in cluster (apache hbase), or run software in cluster (mapreduce, spark).
+
+in hadoop there is a master node who controls clients inside clusters and partition the data between them.
+i do not want to talk about how to configure hadoop + spark in linux. there is a nice tutorial which i followed and configured two machines (1 master + 1 slave). here is the link. thanks to sumit chawla.
+firstly i’ve configures my master node: ubuntu 14.04 + java oracle 8 + virtual box
+
+after that i’ve created my slave01 node which was a clone of master node. there is a good tutorial on how to clone virtual machines using virtualbox in this link. actually i’ve changed some configuration in slave including user name and display name. here is a screenshot of slave01:
+
+after that it is time to start hdfs + yarn + spark in master node. commands are here:<br /><br />
+
+$hadoop_home$/sbin/start-dfs.sh
+$hadoop_home$/sbin/start-yarn.sh
+
+and finally start spark:
+$spark_home$/sbin/start-all.sh
+
+and control in both master and slave01 that daemons are running using jsp:
+
+everything is ok. you can check the spark webui in http://127.0.0.1:8080 and hdfs in http://127.0.0.1:50070 from master node.
+
+i showed master with m and slave node with s [ it seems to be s 🙂 ]
+
+it is time to programming. the main concept in mapreduce or spark programming is (key, value). the main jobs is to read data from file (or hdfs) line by line. process the lines by map and create 0 or 1 or many (key, value) pairs. hadoop will collect and sort the pairs with same key and give them to reducer. now reducer can decide what to do with the values. in the popular example of word count, the reducer sums all 1s to produce the word count.
+ 
+i’ve developed with java. i’ve installed netbeans on master node and added libraries for spark programming from $spark_home$/jars directory.
+/**
+* private static void cooccurencecount(string inputfile, string outputfile) {
+*       // define a configuration to use to interact with spark
+*       sparkconf conf = new sparkconf().setappname(""cooccurence count app"");
+*
+*        // create a java version of the spark context from the configuration
+*        javasparkcontext sc = new javasparkcontext(conf);
+*
+*        // load the input data, which is a text file read from the command line
+*        javardd<string> input = sc.textfile(inputfile);
+*
+*        // java 8 with lambdas: split the input string into words
+*        javardd<string> words = input.flatmap((string t) -> {
+*            jsonobject jobj = new jsonobject(t);
+*            string text = string.valueof(jobj.get(""text""));
+*            string[] outputstring = new string[text.split("" "").length * (text.split("" "").length - 1)];
+*            
+*            int counter = 0;
+*            
+*            for (int i = 0; i < text.split("" "").length; i++) {
+*                for (int j = i + 1; j < text.split("" "").length; j++) {
+*                    outputstring[counter++] = text.split("" "")[i] + "":"" + text.split("" "")[j];
+*                }
+*            }
+*            return arrays.aslist(outputstring).iterator();
+*        });
+*
+*        // java 8 with lambdas: transform the collection of words into pairs (word and 1) and then count them
+*        javapairrdd<string, integer> counts = words.maptopair(t -> new tuple2(t,1)).reducebykey((x, y) -> (int)x + (int)y);
+*
+*        // save the word count back out to a text file, causing evaluation.
+*        counts.saveastextfile(outputfile);
+*    }
+ */
+in the code above, i have parsed the data which is read from hdfs line by line and parsed json. here is a part of my input file:
+
+after that i create pairs of each tweet by its words to find their sequential co-occurrence. for example for the last tweet seen in the above:
+(employs:people,1)
+(employs:green,1)
+(employs:nationality,1)
+(people:green,1)
+(people:nationality,1)
+(green:nationality,1)
+ 
+after compiling the source code to jar, i’ve copied the jar file on all machines (/tmp/tmp/tweetcount.jar) and start to mine them with the following command:
+/**
+ * ./spark-submit --master spark://master:6066 --deploy-mode cluster /tmp/tmp/tweetcount.jar hdfs://master:9000/test/data.txt hdfs://master:9000/test/output_twitter_cooccurence/
+ */
+and vola! everything is ok and after executing, output is in hdfs /test/output_twitter_cooccurence.
+
+the output of a sample file (part-00002) is displayed below:
+
+
+
+
+
+ big data, hadoop, spark, ubuntu
+
+
+
+
+ 
+
+mir saman
+i'm currently an it phd. candidate at urmia university. i'm interested in social network analysis, big data mining, and nlp in my academical field as well as guitar, nature, and android!		
+			view all posts by mir saman		
+
+
+
+
+
+  previous post 
+
+next post"
+Smali Code Injection: Playing with 2048!,/Academic/AndroJava/,"march 30, 2017
+
+				smali code injection: playing with 2048!			
+academicandrojava
+
+
+ 
+
+
+ 
+
+
+
+i’ve met 2048 game many years ago. it is an addictive game witch takes lots of time from the player. 🙁
+so what should i do if i want to have high score and save time? here is where smali takes part. 🙂
+in this post i will describe how to inject into android 2048 game and change the score!in the “smali code injection” i describes how to inject into android apk. the steps is like previous post but finding where to inject is the problem.
+first of all i’ve downloaded 2048 apk and get smali code with apktool.
+
+then i should find where the logic of the game is (the class and method). if the application is not obfuscated, you can use online tools such as java decompilers. or you can use dex2jar and jdgui.
+if the application is obfuscated you should put some debug information in beginning of every method and trace the execution logic.
+fortunately 2048 was not obfuscated. so i’ve looked the logic and find where the score is changed.
+  the code above is where new button created (2 or 4).
+
+this.grid[x][y] = 4;
+} else {
+this.grid[x][y] = move_3;
+and finding the smali code is the next step.
+    
+the point is that v10 contains the number 4. v9 contains 2 (in the else section). v9 changed from const/4 v9, 0x2 to const/16 v9, 0x400 (0x400 = 1024). this is the good one because v9 is not reused after assignment. but unfortunately v10 assigned in the first lines of method and used before aput v10, v8, v6.
+so i’ve added a new variable (v11) and assigned the value of the first lines to it. and changed the locas from 11 to 12.
+so after creating apk and signing it with your certificate, the apk is ready to be installed. (if you are not familiar with signing and repacking, check previous post).
+the screen shots of the new injected application are here:
+ 
+i’ve uploaded both the apks here. you may download and use them.
+2048 game [main].apk
+2048 game [injected].apk
+
+
+
+
+
+ 2048, android, code injection, smali
+
+
+
+
+ 
+
+mir saman
+i'm currently an it phd. candidate at urmia university. i'm interested in social network analysis, big data mining, and nlp in my academical field as well as guitar, nature, and android!		
+			view all posts by mir saman		
+
+
+
+
+
+  previous post 
+
+next post"
+Java Script Based Holy Quran,/Personal/,"march 23, 2017
+
+				java script based holy quran			
+personal
+
+
+ 
+
+
+ 
+
+
+
+i was working on my phd. thesis and calculating the semantic similarities of words which is very heavy and take hours to response!
+recently i was interested to have a pocket size quran. i have used zekr before, but it is not so pocket size!
+
+so i have downloaded quran persian translation text from tanzil and start a small, pocket size quran based on skeleton.
+a simple screen shot is available.
+holy quran
+the project is in my github at this link.
+
+
+
+
+ holy quran, java script, skeleton, tanzil
+
+
+
+
+ 
+
+mir saman
+i'm currently an it phd. candidate at urmia university. i'm interested in social network analysis, big data mining, and nlp in my academical field as well as guitar, nature, and android!		
+			view all posts by mir saman		
+
+
+
+
+
+  previous post 
+
+next post"
+Reversing Java: Part I,/Academic/AndroJava/Programming/,"august 28, 2016
+
+				reversing java: part i			
+academicandrojavaprogramming
+
+
+ 
+
+
+ 
+
+
+
+recently i’ve interested in byte code structure of java and dalvik. i’ve found some useful tools for playing with them.
+destination byte code
+java byte codes are simple to reverse engineering because they compile in run time. i.e. jvm will execute the byte codes in run time, thus java code is cross platform but executes with more delay than direct compiled machine codes (for example using c++ and gcc).
+
+compiling from java source code
+reversing java byte codes are simpler than reversing machine codes. oracle has a documentation about byte code in java. in java each source file (.java file) will be compile to a class file (.class) using the following command:
+javac helloworld.java
+this will create the helloworld.class file in the same folder where java code exists. you may use java’s default reversing tool (javap) for paying with class files.
+result of execution of javap helloworld.class
+compiled from ""helloworld.java""
+public class helloworld {
+public helloworld();
+public static void main(java.lang.string[]);
+}
+if you prefer more verbose results (javap -v helloworld.class):
+classfile helloworld.class
+last modified aug 28, 2016; size 426 bytes
+md5 checksum 90469fd7405d19947ba6e767de8a8b5f
+compiled from ""helloworld.java""
+public class helloworld
+sourcefile: ""helloworld.java""
+minor version: 0
+major version: 52
+flags: acc_public, acc_super
+constant pool:
+#1 = methodref          #6.#15         //  java/lang/object.""<init>"":()v
+#2 = fieldref           #16.#17        //  java/lang/system.out:ljava/io/prin
+tstream;
+#3 = string             #18            //  hello world!
+#4 = methodref          #19.#20        //  java/io/printstream.println:(ljava
+/lang/string;)v
+#5 = class              #21            //  helloworld
+#6 = class              #22            //  java/lang/object
+#7 = utf8               <init>
+#8 = utf8               ()v
+#9 = utf8               code
+#10 = utf8               linenumbertable
+#11 = utf8               main
+#12 = utf8               ([ljava/lang/string;)v
+#13 = utf8               sourcefile
+#14 = utf8               helloworld.java
+#15 = nameandtype        #7:#8          //  ""<init>"":()v
+#16 = class              #23            //  java/lang/system
+#17 = nameandtype        #24:#25        //  out:ljava/io/printstream;
+#18 = utf8               hello world!
+#19 = class              #26            //  java/io/printstream
+#20 = nameandtype        #27:#28        //  println:(ljava/lang/string;)v
+#21 = utf8               helloworld
+#22 = utf8               java/lang/object
+#23 = utf8               java/lang/system
+#24 = utf8               out
+#25 = utf8               ljava/io/printstream;
+#26 = utf8               java/io/printstream
+#27 = utf8               println
+#28 = utf8               (ljava/lang/string;)v
+{
+public helloworld();
+descriptor: ()v
+flags: acc_public
+code:
+stack=1, locals=1, args_size=1
+0: aload_0
+1: invokespecial #1                  // method java/lang/object.""<init>
+"":()v
+4: return
+linenumbertable:
+line 1: 0
+public static void main(java.lang.string[]);
+descriptor: ([ljava/lang/string;)v
+flags: acc_public, acc_static
+code:
+stack=2, locals=1, args_size=1
+0: getstatic     #2                  // field java/lang/system.out:ljav
+a/io/printstream;
+3: ldc           #3                  // string hello world!
+5: invokevirtual #4                  // method java/io/printstream.prin
+tln:(ljava/lang/string;)v
+8: return
+linenumbertable:
+line 3: 0
+line 4: 8
+}
+reversing byte code
+when you open the class file using hex editor, you will see some bytes.
+but how javap can get all the information from these bytes? this is where reversing begins …
+
+each class file has the following structure:
+classfile {
+u4 magic;
+u2 minor_version;
+u2 major_version;
+u2 constant_pool_count;
+cp_info constant_pool[constant_pool_count-1];
+u2 access_flags;
+u2 this_class;
+u2 super_class;
+u2 interfaces_count;
+u2 interfaces[interfaces_count];
+u2 fields_count;
+field_info fields[fields_count];
+u2 methods_count;
+method_info methods[methods_count];
+u2 attributes_count;
+attribute_info attributes[attributes_count];
+}
+we will go through the byte codes step by step. today we analyze some basic parts:
+magic
+as you see, the first bytes are ca fe ba be where java uses cafe babe as its magic for declaring class file.
+minor and major
+the next four bytes 00 00 (0 in decimal) and 00 34 (52 in decimal) shows the minor and major versions. i’ve compiled the code with java se 8, so you can’t run the code with java se 7.
+so the minor version in 0 and major version in 52.
+constant pool
+constant pool is where all the constants used in the class file are stored in it. the next two bytes shows the constant pool size (00 1d = 29 in decimal). the 0th item is for jmv so the items are in constant_pool[1] to constant_pool[28]
+continue reading from secound part:
+
+reversing java: part ii
+
+
+
+
+
+ java, reverse engineering, tutorial
+
+
+
+
+ 
+
+mir saman
+i'm currently an it phd. candidate at urmia university. i'm interested in social network analysis, big data mining, and nlp in my academical field as well as guitar, nature, and android!		
+			view all posts by mir saman		
+
+
+
+
+
+  previous post 
+
+next post"
+Mathematical LDA,/Academic/,"august 24, 2016
+
+				mathematical lda			
+academic
+
+
+ 
+
+
+ 
+
+
+
+in the previous post (latent dirichlet allocation),  i’ve described the lda process and how it can be applied on documents.
+in this post i will explain how the probabilities can be estimated using collapsed gibbs sampling.
+lets start with the lda probabilistic graph model.
+
+where w is the sampled word from document, z is the topic assigned by document (d), θ is the dirichlet distribution of d, α and β are the input of dirichlets. more info about hyperparameters can be found this link.
+so the only known variables are α, β, and w. all others (z, θ, and φ) are unknown. so based on the lda graph we have:
+p(w, z, θ, φ | α, β) = p(φ|β) p(θ|α) p(z|θ) p(w|φz)
+the right side of the above conditional probability can be reached by the probabilistic graph model where each variable only depends on its parent nodes.
+
+inference
+in lda the we want to estimate latent variables (z, θ, and φ) based on known ones (α, β, and w). thus we have:
+p(w | α, β) can not be computed directly. so gibbs sampling is used to estimate latent parameters.
+
+collapsed gibbs sampling
+gibbs sampling is used to estimate p(x) = p(x1, …, xn) where there is no solution for p(x) but there are some forms of conditional probabilities. this method can be applied to lda but there is a more simpler way to do this.
+θ and φ can be calculated based on z where   and . in simple: θ is fraction words in document (d) where belong to the topic(z) and φ is the fraction of word (w) that belongs to topic (z) in the documents that w appeared in them.
+so θ and φ can be out of computations. then we have to estimate: 
+bayes conditional probability rules are coming: 🙂
+
+likehood and prior can be calculated easily. the computation process can be done by means of expectation of dirichlet distribution. for more information check these slides.
+
+
+
+
+ lda, probability
+
+
+
+
+ 
+
+mir saman
+i'm currently an it phd. candidate at urmia university. i'm interested in social network analysis, big data mining, and nlp in my academical field as well as guitar, nature, and android!		
+			view all posts by mir saman		
+
+
+
+
+
+  previous post 
+
+next post"
+Social Share Activated,/Personal/,"august 23, 2016
+
+				social share activated			
+personal
+
+
+ 
+
+
+ 
+
+
+
+now posts from my site will be appear on my twitter, linkedin, and telegram channel.
+
+
+
+
+ share, social
+
+
+
+
+ 
+
+mir saman
+i'm currently an it phd. candidate at urmia university. i'm interested in social network analysis, big data mining, and nlp in my academical field as well as guitar, nature, and android!		
+			view all posts by mir saman		
+
+
+
+
+
+  previous post 
+
+next post"
+Latent Dirichlet Allocation,/Academic/,"august 21, 2016
+
+				latent dirichlet allocation			
+academic
+
+
+ 
+
+
+ 
+
+
+
+what is latent dirichlet allocation?
+in a general view, lda is an unsupervised method for clustering documents. it models (purified) documents as bag of words. also it assumes each word (and document) has a mixture model of topics i.e. each word (and document) may belongs to each of the topics by a probability. it takes number of clusters in the corpus as input then, simply assigns each word in each document a random topic. then tries for
+it was a very general description of lda.
+
+how it is work?
+the process of lda depends on the bag of words model of documents. first of all there are k topics that is input of lda (guessed!). we have totally d documents and v distinct vocabulary in the document set. the generative process is:
+
+for k = 1 … k:
+
+φ(k) ∼ dirichlet(β)
+
+
+for each d in d:
+
+θd ∼ dirichlet(α)
+for each word wi in d
+
+zi ∼ discrete(θd)
+wi ∼ disctete(φ(zi))
+
+
+
+
+
+this is the total process. but what it means?
+dirichlet
+in simple words, dirichlet is a probabilistic distribution that has k concentration parameters. each parameter (α) is a random number greater than zero (α > 0). following is an example of dirichlet distribution for 20 documents with 4 topics. parameters for this example (α1 = 10, α2 = 5, α3 = 3, and α4 = 20).
+
+φ(k)
+this is a dirichlet distribution for the kth topic. the φ is a kxv matrix where each element is the probability of belonging the vth word to the kth topic.
+
+θd
+similarly the θd is a dirichlet for the document d. it shows the belonging of the document to each of the topics.
+finally
+the process is as below in simple words:
+
+for each topic:
+
+randomly initialize belonging probability of each word in vocabulary to the topics.
+
+
+for each document:
+
+randomly initialize belonging probability of current document to the topics.
+for each word:
+
+choose a topic from θd (zi)
+randomly choose a new word from φ(k) where k is the selected topic in the previous part.
+
+
+
+
+
+the last step, helps us to find words similar to the current chosen one to be in same cluster.
+in the next post, i will explore the mathematics behind the lda. any comments?
+
+
+
+
+ clustering, lda, nlp
+
+
+
+
+ 
+
+mir saman
+i'm currently an it phd. candidate at urmia university. i'm interested in social network analysis, big data mining, and nlp in my academical field as well as guitar, nature, and android!		
+			view all posts by mir saman		
+
+
+
+
+
+  previous post 
+
+next post"
+New Site Created,/Personal/,"august 18, 2016
+
+				new site created			
+personal
+
+
+ 
+
+
+ 
+
+
+
+after dealing with the old site, i’ve decided to reform my blog to this site. 🙂
+the old uutelgg is closed.
+
+
+
+
+ new site, old site
+
+
+
+
+ 
+
+mir saman
+i'm currently an it phd. candidate at urmia university. i'm interested in social network analysis, big data mining, and nlp in my academical field as well as guitar, nature, and android!		
+			view all posts by mir saman		
+
+
+
+
+
+
+
+next post"
